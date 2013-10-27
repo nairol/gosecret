@@ -14,8 +14,30 @@ struct IceSubkey
 
 
 	/* The S-boxes */
-uint[1024][4] ice_sbox;
-bool          ice_sboxes_initialised = false;
+immutable uint[1024][4] ice_sbox;
+
+static this()
+{
+	// Initialise S-boxes
+	for( int i=0; i<1024; i++ )
+	{
+		int col = (i >> 1) & 0xff;
+		int row = (i & 0x1) | ((i & 0x200) >> 8);
+		uint x;
+		
+		x = gf_exp7( col ^ ice_sxor[0][row], ice_smod[0][row] ) << 24;
+		ice_sbox[0][i] = ice_perm32( x );
+		
+		x = gf_exp7( col ^ ice_sxor[1][row], ice_smod[1][row] ) << 16;
+		ice_sbox[1][i] = ice_perm32( x );
+		
+		x = gf_exp7( col ^ ice_sxor[2][row], ice_smod[2][row] ) << 8;
+		ice_sbox[2][i] = ice_perm32( x );
+		
+		x = gf_exp7( col ^ ice_sxor[3][row], ice_smod[3][row] );
+		ice_sbox[3][i] = ice_perm32( x );
+	}
+}
 
 
 	/* Modulo values for the S-boxes */
@@ -116,34 +138,6 @@ uint ice_perm32( uint x )
 
 
 /*
- * Initialise the ICE S-boxes.
- * This only has to be done once.
- */
-
-void ice_sboxes_init( )
-{
-	for( int i=0; i<1024; i++ )
-	{
-		int col = (i >> 1) & 0xff;
-		int row = (i & 0x1) | ((i & 0x200) >> 8);
-		uint x;
-		
-		x = gf_exp7( col ^ ice_sxor[0][row], ice_smod[0][row] ) << 24;
-		ice_sbox[0][i] = ice_perm32( x );
-		
-		x = gf_exp7( col ^ ice_sxor[1][row], ice_smod[1][row] ) << 16;
-		ice_sbox[1][i] = ice_perm32( x );
-		
-		x = gf_exp7( col ^ ice_sxor[2][row], ice_smod[2][row] ) << 8;
-		ice_sbox[2][i] = ice_perm32( x );
-		
-		x = gf_exp7( col ^ ice_sxor[3][row], ice_smod[3][row] );
-		ice_sbox[3][i] = ice_perm32( x );
-	}
-}
-
-
-/*
  * The single round ICE f function.
  */
 
@@ -177,12 +171,6 @@ class IceKey
 	/// Create a new ICE key of length n
 	this( uint n )
 	{
-		if( !ice_sboxes_initialised )
-		{
-			ice_sboxes_init( );
-			ice_sboxes_initialised = true;
-		}
-		
 		if( n < 1 )
 		{
 			size = 1;
