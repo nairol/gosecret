@@ -78,7 +78,7 @@ string getDumpFilePath( )
 		       .getKey("Windows")
 		       .getKey("CurrentVersion")
 		       .getKey("Uninstall")
-		       .getKey("Steam App 221910")
+		       .getKey("Steam App 247750")
 		       .getValue("InstallLocation")
 		       .value_SZ
 		       ~ "\\platform\\dump0.tmp";
